@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mini boutique — Exemple de vente de produit</title>
+  <style>
+    :root{--accent:#0b74de;--bg:#f6f8fb;--card:#fff}
+    *{box-sizing:border-box;font-family:Inter, system-ui, Arial, sans-serif}
+    body{margin:0;background:var(--bg);color:#0b1320}
+    header{background:linear-gradient(90deg,#0b74de1a,transparent);padding:18px 24px;display:flex;align-items:center;justify-content:space-between}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:42px;height:42px;border-radius:8px;background:var(--accent);display:flex;align-items:center;justify-content:center;color:white;font-weight:700}
+    main{max-width:1100px;margin:28px auto;padding:0 16px}
+    .grid{display:grid;grid-template-columns:1fr 320px;gap:20px}
+    .products{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+    .card{background:var(--card);padding:14px;border-radius:10px;box-shadow:0 4px 12px rgba(11,18,32,0.06);display:flex;flex-direction:column}
+    .thumb{height:140px;border-radius:8px;background:linear-gradient(135deg,#e6f2ff,#ffffff);display:flex;align-items:center;justify-content:center;font-size:20px;color:#0b74de;margin-bottom:10px}
+    .title{font-weight:600;margin:6px 0}
+    .price{font-weight:700;margin-top:auto}
+    button{background:var(--accent);color:white;border:none;padding:9px 12px;border-radius:8px;cursor:pointer}
+    .cart{background:var(--card);padding:16px;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,0.06)}
+    .cart h3{margin-top:0}
+    .cart .item{display:flex;gap:10px;align-items:center;margin-bottom:10px}
+    .cart .qty{display:inline-block;padding:6px 8px;border-radius:6px;background:#f1f5f9}
+    .checkout{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+    .input{padding:10px;border-radius:8px;border:1px solid #e6edf3}
+    .empty{color:#6b7280}
+    footer{text-align:center;padding:18px;color:#6b7280}
+    @media(max-width:880px){.grid{grid-template-columns:1fr}.cart{order:2;margin-top:12px}}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo">B</div>
+      <div>
+        <div style="font-weight:700">Boutique Demo</div>
+        <div style="font-size:13px;color:#475569">Articles tech & lifestyle</div>
+      </div>
+    </div>
+    <div>
+      <button id="view-cart">Voir le panier (<span id="cart-count">0</span>)</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="grid">
+      <section>
+        <h2>Produits populaires</h2>
+        <div class="products" id="products"></div>
+      </section>
+
+      <aside class="cart" id="cart-panel">
+        <h3>Panier</h3>
+        <div id="cart-items"></div>
+        <div id="cart-empty" class="empty">Votre panier est vide.</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
+          <strong>Total :</strong>
+          <div id="cart-total">0,00 €</div>
+        </div>
+
+        <div class="checkout">
+          <input id="name" class="input" placeholder="Nom complet" />
+          <input id="email" class="input" placeholder="Email" />
+          <button id="checkout-btn">Passer à la caisse</button>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <footer>
+    Exemple simple de page de vente — pas de paiement réel inclus.
+  </footer>
+
+  <script>
+    // Données produits (exemple)
+    const productsData = [
+      {id:1,title:'Casque Bluetooth',desc:'Son immersif, autonomie 30h',price:59.99},
+      {id:2,title:'Montre Connectée',desc:'Suivi santé et notifications',price:129.00},
+      {id:3,title:'Sac à dos urbain',desc:'Étanche, anti-vol',price:79.50},
+      {id:4,title:'Lampe LED Smart',desc:'Contrôle via app',price:29.90}
+    ];
+
+    // État du panier
+    const cart = {};
+
+    // Formatage prix
+    function formatPrice(v){return v.toLocaleString('fr-FR',{style:'currency',currency:'EUR'})}
+
+    // Rendu des produits
+    const productsEl = document.getElementById('products');
+    function renderProducts(){
+      productsEl.innerHTML = '';
+      productsData.forEach(p => {
+        const card = document.createElement('article'); card.className='card';
+        card.innerHTML = `
+          <div class="thumb">📦</div>
+          <div class="title">${p.title}</div>
+          <div class="desc" style="color:#64748b;font-size:13px">${p.desc}</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
+            <div class="price">${formatPrice(p.price)}</div>
+            <button data-id="${p.id}">Ajouter</button>
+          </div>`;
+        productsEl.appendChild(card);
+      });
+
+      // attach events
+      productsEl.querySelectorAll('button').forEach(btn=> btn.addEventListener('click',()=> addToCart(Number(btn.dataset.id))));
+    }
+
+    // Ajouter au panier
+    function addToCart(id){
+      const p = productsData.find(x=>x.id===id);
+      if(!p) return;
+      cart[id] = cart[id] || {...p, qty:0};
+      cart[id].qty++;
+      renderCart();
+    }
+
+    function removeFromCart(id){
+      if(!cart[id]) return;
+      cart[id].qty--;
+      if(cart[id].qty<=0) delete cart[id];
+      renderCart();
+    }
+
+    // Rendu du panier
+    const cartItemsEl = document.getElementById('cart-items');
+    const cartEmptyEl = document.getElementById('cart-empty');
+    const cartTotalEl = document.getElementById('cart-total');
+    const cartCountEl = document.getElementById('cart-count');
+
+    function renderCart(){
+      cartItemsEl.innerHTML = '';
+      const ids = Object.keys(cart);
+      if(ids.length===0){ cartEmptyEl.style.display='block'; } else { cartEmptyEl.style.display='none'; }
+
+      let total = 0; let count = 0;
+      ids.forEach(k=>{
+        const it = cart[k];
+        total += it.price * it.qty; count += it.qty;
+        const div = document.createElement('div'); div.className='item';
+        div.innerHTML = `
+          <div style="flex:1">
+            <div style="font-weight:600">${it.title}</div>
+            <div style="font-size:13px;color:#64748b">${formatPrice(it.price)} x ${it.qty}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="qty">${formatPrice(it.price * it.qty)}</div>
+            <div style="margin-top:6px;display:flex;gap:6px;justify-content:flex-end">
+              <button data-action="add" data-id="${it.id}">+</button>
+              <button data-action="remove" data-id="${it.id}">−</button>
+            </div>
+          </div>`;
+        cartItemsEl.appendChild(div);
+      });
+
+      cartTotalEl.textContent = formatPrice(total);
+      cartCountEl.textContent = count;
+
+      // events for +/-
+      cartItemsEl.querySelectorAll('button').forEach(b=> b.addEventListener('click', e=>{
+        const id = Number(e.currentTarget.dataset.id);
+        const action = e.currentTarget.dataset.action;
+        if(action==='add') addToCart(id); else removeFromCart(id);
+      }));
+    }
+
+    // Checkout (simulation)
+    document.getElementById('checkout-btn').addEventListener('click', ()=>{
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      if(Object.keys(cart).length===0){ alert('Votre panier est vide.'); return; }
+      if(!name || !email){ alert('Veuillez renseigner votre nom et email.'); return; }
+      // Simuler envoi
+      console.log('Commande simulée', {name,email,cart});
+      alert('Merci '+name+' ! Votre commande a été prise en compte (simulation).');
+      // réinitialiser
+      for(const k of Object.keys(cart)) delete cart[k];
+      renderCart();
+      document.getElementById('name').value=''; document.getElementById('email').value='';
+    });
+
+    // Afficher/masquer le panneau du panier (mobile ou bouton)
+    document.getElementById('view-cart').addEventListener('click', ()=>{
+      const panel = document.getElementById('cart-panel');
+      panel.scrollIntoView({behavior:'smooth'});
+    });
+
+    // Initialisation
+    renderProducts(); renderCart();
+  </script>
+</body>
+</html>
+
+
+     	
