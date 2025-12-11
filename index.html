@@ -15,7 +15,7 @@
     .grid{display:grid;grid-template-columns:1fr 320px;gap:20px}
     .products{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
     .card{background:var(--card);padding:14px;border-radius:10px;box-shadow:0 4px 12px rgba(11,18,32,0.06);display:flex;flex-direction:column}
-    .thumb{height:140px;border-radius:8px;background:linear-gradient(135deg,#e6f2ff,#ffffff);display:flex;align-items:center;justify-content:center;font-size:20px;color:#0b74de;margin-bottom:10px}
+    .thumb img{width:100%;height:140px;object-fit:cover;border-radius:8px;margin-bottom:10px}
     .title{font-weight:600;margin:6px 0}
     .price{font-weight:700;margin-top:auto}
     button{background:var(--accent);color:white;border:none;padding:9px 12px;border-radius:8px;cursor:pointer}
@@ -74,28 +74,26 @@
   </footer>
 
   <script>
-    // Données produits (exemple)
+    // Données produits avec liens images
     const productsData = [
-      {id:1,title:'Casque Bluetooth',desc:'Son immersif, autonomie 30h',price:59.99},
-      {id:2,title:'Montre Connectée',desc:'Suivi santé et notifications',price:129.00},
-      {id:3,title:'Sac à dos urbain',desc:'Étanche, anti-vol',price:79.50},
-      {id:4,title:'Lampe LED Smart',desc:'Contrôle via app',price:29.90}
+      {id:1,title:'Casque Bluetooth',desc:'Son immersif, autonomie 30h',price:59.99,img:'https://images.unsplash.com/photo-1580894732444-8ecded7900cd?auto=format&fit=crop&w=600&q=60'},
+      {id:2,title:'Montre Connectée',desc:'Suivi santé et notifications',price:129.00,img:'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=600&q=60'},
+      {id:3,title:'Sac à dos urbain',desc:'Étanche, anti-vol',price:79.50,img:'https://images.unsplash.com/photo-1596755389378-c31d21fd1273?auto=format&fit=crop&w=600&q=60'},
+      {id:4,title:'Lampe LED Smart',desc:'Contrôle via app',price:29.90,img:'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=600&q=60'}
     ];
 
     // État du panier
     const cart = {};
 
-    // Formatage prix
     function formatPrice(v){return v.toLocaleString('fr-FR',{style:'currency',currency:'EUR'})}
 
-    // Rendu des produits
     const productsEl = document.getElementById('products');
     function renderProducts(){
       productsEl.innerHTML = '';
       productsData.forEach(p => {
         const card = document.createElement('article'); card.className='card';
         card.innerHTML = `
-          <div class="thumb">📦</div>
+          <div class="thumb"><img src="${p.img}" alt="${p.title}"></div>
           <div class="title">${p.title}</div>
           <div class="desc" style="color:#64748b;font-size:13px">${p.desc}</div>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
@@ -105,11 +103,9 @@
         productsEl.appendChild(card);
       });
 
-      // attach events
       productsEl.querySelectorAll('button').forEach(btn=> btn.addEventListener('click',()=> addToCart(Number(btn.dataset.id))));
     }
 
-    // Ajouter au panier
     function addToCart(id){
       const p = productsData.find(x=>x.id===id);
       if(!p) return;
@@ -125,7 +121,6 @@
       renderCart();
     }
 
-    // Rendu du panier
     const cartItemsEl = document.getElementById('cart-items');
     const cartEmptyEl = document.getElementById('cart-empty');
     const cartTotalEl = document.getElementById('cart-total');
@@ -159,7 +154,6 @@
       cartTotalEl.textContent = formatPrice(total);
       cartCountEl.textContent = count;
 
-      // events for +/-
       cartItemsEl.querySelectorAll('button').forEach(b=> b.addEventListener('click', e=>{
         const id = Number(e.currentTarget.dataset.id);
         const action = e.currentTarget.dataset.action;
@@ -167,32 +161,24 @@
       }));
     }
 
-    // Checkout (simulation)
     document.getElementById('checkout-btn').addEventListener('click', ()=>{
       const name = document.getElementById('name').value.trim();
       const email = document.getElementById('email').value.trim();
       if(Object.keys(cart).length===0){ alert('Votre panier est vide.'); return; }
       if(!name || !email){ alert('Veuillez renseigner votre nom et email.'); return; }
-      // Simuler envoi
-      console.log('Commande simulée', {name,email,cart});
+
       alert('Merci '+name+' ! Votre commande a été prise en compte (simulation).');
-      // réinitialiser
       for(const k of Object.keys(cart)) delete cart[k];
       renderCart();
       document.getElementById('name').value=''; document.getElementById('email').value='';
     });
 
-    // Afficher/masquer le panneau du panier (mobile ou bouton)
     document.getElementById('view-cart').addEventListener('click', ()=>{
       const panel = document.getElementById('cart-panel');
       panel.scrollIntoView({behavior:'smooth'});
     });
 
-    // Initialisation
     renderProducts(); renderCart();
   </script>
 </body>
 </html>
-
-
-     	
